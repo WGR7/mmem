@@ -1,4 +1,7 @@
-// http://mc.pp.se/dc/vms/flashmem.html
+/* 
+ * Big thanks to Marcus Comstedt's documentation at:
+ * http://mc.pp.se/dc/vms/flashmem.html
+ */
 
 #include <assert.h>
 #include <inttypes.h>
@@ -133,7 +136,7 @@ typedef struct vms_header {
 	uint16_t CRC;
 	uint32_t size;
 	uint8_t _unused[20];
-	// icon data...
+	// XXX - icon data...
 } vms_header;
 
 /*
@@ -220,7 +223,7 @@ vms_read_root_block(FILE * file) {
 
 	assert(block != NULL);
 
-	// XXX - All these bytes contain 0x55 to indicate a properly formatted card.
+	// All these bytes contain 0x55 to indicate a properly formatted card.
     for (i = 0; i < VMS_FORMAT_SIZE; i++) {
 		assert(block->format_check[i] == VMS_FORMAT_BYTE);
 	}
@@ -235,19 +238,6 @@ vms_open(const char *path) {
 	vmu = fopen(path, "r");
 	assert(vmu != NULL);
 	return vmu;
-}
-
-int calcCRC(const char *buf, int size) {
-  int i, c, n = 0;
-  for (i = 0; i < size; i++) {
-    n ^= (buf[i]<<8);
-    for (c = 0; c < 8; c++)
-      if (n & 0x8000)
-	n = (n << 1) ^ 4129;
-      else
-	n = (n << 1);
-  }
-  return n & 0xffff;
 }
 
 int
@@ -374,7 +364,6 @@ main(int argc, char **argv) {
 				header->desc[14],
 				header->desc[15]);
 
-			//strncmp(const char *s1, const char *s2, size_t n);
 			if (strncmp("ICONDATA_VMS", entries->entry[i].name, 12) == 0) {
 				printf("       HIDDEN FILE\n\n");
 			} else {
@@ -421,7 +410,6 @@ main(int argc, char **argv) {
 
 	free(root_block);
 	free(fat_block);
-	
 
 	return 0;
 }
