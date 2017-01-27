@@ -224,7 +224,7 @@ vms_read_root_block(FILE * file) {
 	assert(block != NULL);
 
 	// All these bytes contain 0x55 to indicate a properly formatted card.
-    for (i = 0; i < VMS_FORMAT_SIZE; i++) {
+	for (i = 0; i < VMS_FORMAT_SIZE; i++) {
 		assert(block->format_check[i] == VMS_FORMAT_BYTE);
 	}
 
