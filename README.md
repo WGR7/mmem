@@ -1,5 +1,5 @@
 # mmem
-Utility for reading from (and eventually writing to) a Dreamcast Visual Memory Unit
+Based on the documentation from Marcus Comstedt's [Dreamcast Programming page](http://mc.pp.se/dc/vms/flashmem.html). 
 
 Currently can only read the memory card's blocks and print some of the data. 
 
