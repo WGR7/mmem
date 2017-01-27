@@ -1,8 +1,7 @@
 # mmem
 Utility for reading (and eventually writing) a Dreamcast Visual Memory Unit
 
-
-Currently all this program does is parse and print data from the memory card.
+Currently can only read the memory card's blocks and print some of the data. Lots of work left to do.
 
 ```
 $ ./mmem img/mem0
