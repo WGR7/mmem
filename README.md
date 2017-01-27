@@ -1,10 +1,11 @@
 # mmem
-Utility for reading (and eventually writing) a Dreamcast Visual Memory Unit
+Utility for reading from (and eventually writing to) a Dreamcast Visual Memory Unit
 
 Currently can only read the memory card's blocks and print some of the data. 
 
 **Still a lot of work left to do.**
 
+## Example output:
 ```
 $ ./mmem img/mem0
 [255] = Root Block
