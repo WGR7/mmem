@@ -26,6 +26,7 @@
 #define VMS_BLOCKS 256
 #define VMS_BLOCK_SIZE 512
 #define VMS_SIZE (VMS_BLOCKS * VMS_BLOCK_SIZE)
+#define VMS_ENTRIES_PER_BLOCK 16
 
 #define VMS_USER_BLOCK_START 0
 #define VMS_USER_BLOCK_END 199
@@ -127,11 +128,11 @@ typedef struct vms_entry {
  *  ...	depends on type	...	Graphic eyecatch palette and bitmap
 */
 typedef struct vms_header {
-	char desc[16];
-	char desc2[32];
+	char vms_desc[16];
+	char dc_desc[32];
 	char app[16];
 	uint16_t icons;
-	uint16_t icon_speed;
+	uint16_t animation_speed;
 	uint16_t graphic_type; //?
 	uint16_t CRC;
 	uint32_t size;
@@ -186,13 +187,28 @@ typedef struct vms_root_block {
 typedef uint8_t vms_block[VMS_BLOCK_SIZE];
 
 typedef struct vms_dir_entries {
-	 // XXX - ENTRIES PER BLOCK
-	vms_entry entry[16];
+	vms_entry entry[VMS_ENTRIES_PER_BLOCK];
 } vms_dir_entries;
 
 typedef struct vms_fat_block {
 	uint16_t block[VMS_BLOCKS];
 } vms_fat_block;
+
+// XXX - http://mc.pp.se/dc/vms/fileheader.html
+int vms_crc(const unsigned char *buf, int size) {
+	int i, c, n = 0;
+	for (i = 0; i < size; i++) {
+		n ^= (buf[i]<<8);
+		for (c = 0; c < 8; c++) {
+			if (n & 0x8000) {
+				n = (n << 1) ^ 4129;
+			} else {
+				n = (n << 1);
+			}
+		}
+	}
+	return n & 0xffff;
+}
 
 vms_block *
 vms_read_block(FILE *file, int block) {
@@ -247,7 +263,7 @@ main(int argc, char **argv) {
 	vms_fat_block * fat_block;
 	vms_dir_entries * entries;
 	vms_header * header;
-	int i, j;
+	int i, j, index = 0;
 
 	vmu = vms_open(argv[1]);
 
@@ -306,43 +322,56 @@ main(int argc, char **argv) {
 
 		printf("[%d]\n", root_block->fat_dir_block - j);
 
-		// XXX entries per block
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < VMS_ENTRIES_PER_BLOCK; i++) {
 
 			if (entries->entry[i].type == VMS_ENTRY_GAME) {
-				printf(" game data: ");
+				printf("#%03d GAME:\n", index);
 			} else if (entries->entry[i].type == VMS_ENTRY_DATA) {
-				printf(" file data: ");
+				printf("#%03d FILE:\n", index);
 			} else {
 				continue;
 			}
 
-			printf("%.12s ", entries->entry[i].name);
+			index += 1;
 
-			printf("[%03d", entries->entry[i].first_block);
-			printf("+%03d] ", entries->entry[i].size);
-			printf("%02x%02x-%02x-%02x %02x:%02x ",
+			header = (vms_header *)vms_read_block(vmu,
+				entries->entry[i].first_block +
+				entries->entry[i].header_offset);
+
+			if (strncmp("ICONDATA_VMS", entries->entry[i].name, 12) == 0) {
+				printf(" title: HIDDEN FILE\n");
+			} else { 
+				printf(" title: %.16s", header->dc_desc);
+				printf("%.16s\n", &header->dc_desc[16]);
+				printf(" app: %.16s\n", header->app);
+			}
+
+			printf(" desc: %.16s\n", header->vms_desc);
+
+			printf(" name: %.12s\n", entries->entry[i].name);
+
+			printf(" crc: 0x%04x\n", header->CRC);
+
+			printf(" icon(s): %d\n", header->icons);
+
+			printf(" animation speed: %d\n", header->animation_speed);
+
+			// XXX
+			printf(" size: %d bytes\n",
+				(entries->entry[i].first_block + entries->entry[i].size));
+
+			printf(" first block: #%d\n", entries->entry[i].first_block);
+
+			printf(" created: %02x%02x-%02x-%02x %02x:%02x\n",
 				entries->entry[i].created.century,
 				entries->entry[i].created.year,
 				entries->entry[i].created.month,
 				entries->entry[i].created.day,
 				entries->entry[i].created.hour,
 				entries->entry[i].created.minute);
-	
-			printf("%03d\n", entries->entry[i].header_offset);
 
-			header = (vms_header *)vms_read_block(vmu,
-				entries->entry[i].first_block +
-				entries->entry[i].header_offset);
+			printf(" offset: %03d\n", entries->entry[i].header_offset);
 
-			printf(" desc: %.16s\n", header->desc);
-
-			if (strncmp("ICONDATA_VMS", entries->entry[i].name, 12) == 0) {
-				printf("       HIDDEN FILE\n\n");
-			} else {
-				printf("       %.16s", header->desc2);
-				printf("%.16s\n", &header->desc2[16]);
-			}
 			free(header);
 
 		}
