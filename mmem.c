@@ -310,26 +310,14 @@ main(int argc, char **argv) {
 		for (i = 0; i < 16; i++) {
 
 			if (entries->entry[i].type == VMS_ENTRY_GAME) {
-				printf(" game: ");
+				printf(" game data: ");
 			} else if (entries->entry[i].type == VMS_ENTRY_DATA) {
-				printf(" file: ");
+				printf(" file data: ");
 			} else {
 				continue;
 			}
 
-			printf("%c%c%c%c%c%c%c%c%c%c%c%c ",
-				entries->entry[i].name[0],
-				entries->entry[i].name[1],
-				entries->entry[i].name[2],
-				entries->entry[i].name[3],
-				entries->entry[i].name[4],
-				entries->entry[i].name[5],
-				entries->entry[i].name[6],
-				entries->entry[i].name[7],
-				entries->entry[i].name[8],
-				entries->entry[i].name[9],
-				entries->entry[i].name[10],
-				entries->entry[i].name[11]);
+			printf("%.12s ", entries->entry[i].name);
 
 			printf("[%03d", entries->entry[i].first_block);
 			printf("+%03d] ", entries->entry[i].size);
@@ -340,67 +328,20 @@ main(int argc, char **argv) {
 				entries->entry[i].created.day,
 				entries->entry[i].created.hour,
 				entries->entry[i].created.minute);
+	
 			printf("%03d\n", entries->entry[i].header_offset);
 
-			header = (vms_header * )vms_read_block(vmu,
+			header = (vms_header *)vms_read_block(vmu,
 				entries->entry[i].first_block +
 				entries->entry[i].header_offset);
 
-			printf(" desc: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
-				header->desc[0],
-				header->desc[1],
-				header->desc[2],
-				header->desc[3],
-				header->desc[4],
-				header->desc[5],
-				header->desc[6],
-				header->desc[7],
-				header->desc[8],
-				header->desc[9],
-				header->desc[10],
-				header->desc[11],
-				header->desc[12],
-				header->desc[13],
-				header->desc[14],
-				header->desc[15]);
+			printf(" desc: %.16s\n", header->desc);
 
 			if (strncmp("ICONDATA_VMS", entries->entry[i].name, 12) == 0) {
 				printf("       HIDDEN FILE\n\n");
 			} else {
-				printf("       %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-					header->desc2[0],
-					header->desc2[1],
-					header->desc2[2],
-					header->desc2[3],
-					header->desc2[4],
-					header->desc2[5],
-					header->desc2[6],
-					header->desc2[7],
-					header->desc2[8],
-					header->desc2[9],
-					header->desc2[10],
-					header->desc2[11],
-					header->desc2[12],
-					header->desc2[13],
-					header->desc2[14],
-					header->desc2[15]);
-				printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
-					header->desc2[16],
-					header->desc2[17],
-					header->desc2[18],
-					header->desc2[19],
-					header->desc2[20],
-					header->desc2[21],
-					header->desc2[22],
-					header->desc2[23],
-					header->desc2[24],
-					header->desc2[25],
-					header->desc2[26],
-					header->desc2[27],
-					header->desc2[28],
-					header->desc2[29],
-					header->desc2[30],
-					header->desc2[31]);
+				printf("       %.16s", header->desc2);
+				printf("%.16s\n", &header->desc2[16]);
 			}
 			free(header);
 
